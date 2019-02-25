@@ -30,6 +30,37 @@ function AsyncUtils.parallel(things)
 end
 
 --[[
+    Given a table, this function returns a promise which
+    resolves once all of the table values have resolved, or rejects
+    if any of the array elements reject.
+
+    Any values in the table which aren't promises are considered
+    resolved immediately.
+
+    The promise resolves to a table mapping the input table keys to resolved values.
+]]
+function AsyncUtils.props(things)
+    local keys = TableUtils.Keys(things)
+    local values =
+        TableUtils.Map(
+        keys,
+        function(key)
+            return things[key]
+        end
+    )
+    return AsyncUtils.parallel(values):andThen(
+        function(output)
+            return TableUtils.KeyBy(
+                output,
+                function(value, i)
+                    return keys[i]
+                end
+            )
+        end
+    )
+end
+
+--[[
     Returns a promise which resolves after the given delayInSeconds.
 ]]
 function AsyncUtils.delay(delayInSeconds)
