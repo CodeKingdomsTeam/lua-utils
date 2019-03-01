@@ -18,6 +18,14 @@ function TableUtils.Map(source, handler) --: ((any[], (element: any, key: number
 	return result
 end
 
+function TableUtils.Reverse(source)
+	local result = {}
+	for i = #source, 1, -1 do
+		table.insert(result, source[i])
+	end
+	return result
+end
+
 function TableUtils.FlatMap(source, handler) --: ((any[], (element: any, key: number) => any[]) => any[]) | ((table, (element: any, key: string) => any[]) => table)
 	local result = {}
 	for i, v in pairs(source) do
