@@ -1,6 +1,25 @@
 local TableUtils = require(script.Parent.TableUtils)
 local ClassUtils = {}
 
+local function generateMetatable(Class)
+	return {
+		__index = Class,
+		__tostring = Class.toString,
+		__eq = Class.equals,
+		__add = Class.__add,
+		__sub = Class.__sub,
+		__mul = Class.__mul,
+		__div = Class.__div,
+		__mod = Class.__mod,
+		__pow = Class.__pow,
+		__unm = Class.__unm,
+		__concat = Class.__concat,
+		__len = Class.__len,
+		__lt = Class.__lt,
+		__le = Class.__le
+	}
+end
+
 function ClassUtils.makeClass(name, constructor)
 	local Class = {
 		name = name,
@@ -10,13 +29,17 @@ function ClassUtils.makeClass(name, constructor)
 	}
 	function Class.new(...)
 		local instance = Class.constructor(...)
-		setmetatable(instance, {__index = Class, __tostring = Class.toString, __eq = Class.equals})
+		setmetatable(instance, generateMetatable(Class))
 		return instance
 	end
 	function Class:extend(name, constructor)
 		local Subclass = ClassUtils.makeClass(name, constructor or self.constructor)
 		setmetatable(Subclass, {__index = self})
 		return Subclass
+	end
+	function Class:equals(other)
+		assert(ClassUtils.isA(other, Class))
+		return TableUtils.shallowMatch(self, other)
 	end
 	function Class:toString()
 		return self.name
@@ -32,7 +55,7 @@ function ClassUtils.makeConstructedClass(name, constructor)
 		function(data)
 			local instance = TableUtils.Clone(data)
 			if constructor then
-				setmetatable(instance, {__index = Class, __tostring = Class.toString, __eq = Class.equals})
+				setmetatable(instance, generateMetatable(Class))
 				constructor(instance)
 			end
 			return instance
