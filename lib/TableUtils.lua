@@ -306,11 +306,7 @@ function TableUtils.DeepEquals(a, b)
 	return TableUtils.IsSubset(a, b) and TableUtils.IsSubset(b, a)
 end
 
--- Based on https://developmentarc.gitbooks.io/react-indepth/content/life_cycle/update/using_should_component_update.html
-function TableUtils.shallowEqual(left, right)
-	if left == right then
-		return true
-	end
+function TableUtils.shallowMatch(left, right)
 	if type(left) ~= "table" or type(right) ~= "table" then
 		return false
 	end
@@ -325,6 +321,14 @@ function TableUtils.shallowEqual(left, right)
 			return value == right[key]
 		end
 	)
+end
+
+-- Based on https://developmentarc.gitbooks.io/react-indepth/content/life_cycle/update/using_should_component_update.html
+function TableUtils.shallowEqual(left, right)
+	if left == right then
+		return true
+	end
+	return TableUtils.shallowMatch(left, right)
 end
 
 return TableUtils
