@@ -20,7 +20,7 @@ local function generateMetatable(Class)
 	}
 end
 
-function ClassUtils.makeClass(name, constructor)
+function ClassUtils.makeClass(name, constructor, include)
 	local Class = {
 		name = name,
 		constructor = constructor or function()
@@ -37,12 +37,28 @@ function ClassUtils.makeClass(name, constructor)
 		setmetatable(Subclass, {__index = self})
 		return Subclass
 	end
-	function Class:equals(other)
-		assert(ClassUtils.isA(other, Class))
-		return TableUtils.shallowMatch(self, other)
+	if include and include.equals then
+		function Class:equals(other)
+			assert(ClassUtils.isA(other, Class))
+			return TableUtils.shallowMatch(self, other)
+		end
 	end
-	function Class:toString()
-		return self.name
+	if include and include.toString then
+		function Class:toString()
+			local string = Class.name .. "("
+			local first = true
+			local keys = TableUtils.Keys(self)
+			table.sort(keys)
+			for _, key in ipairs(keys) do
+				local value = self[key]
+				if not first then
+					string = string .. ", "
+				end
+				string = string .. key .. " = " .. tostring(value)
+				first = false
+			end
+			return string .. ")"
+		end
 	end
 	return Class
 end
@@ -78,7 +94,7 @@ function ClassUtils.makeSymbolEnum(keys)
 	return TableUtils.Map(
 		ClassUtils.makeEnum(keys),
 		function(key)
-			return ClassUtils.makeSymbol(key)
+			return ClassUtils.Symbol.new(key)
 		end
 	)
 end
@@ -103,19 +119,23 @@ function ClassUtils.isA(instance, classOrEnum)
 	return false
 end
 
-function ClassUtils.makeSymbol(name)
-	local symbol = {
-		__symbol = name
-	}
-	setmetatable(
-		symbol,
-		{
-			__tostring = function()
-				return name
-			end
+ClassUtils.Symbol =
+	ClassUtils.makeClass(
+	"Symbol",
+	function(name)
+		return {
+			__symbol = name
 		}
-	)
-	return symbol
+	end
+)
+
+function ClassUtils.Symbol:toString()
+	return self.__symbol
+end
+
+function ClassUtils.parseEnumValue(value, ENUM)
+	local textValue = tostring(value):upper():gsub("-", "_")
+	return ENUM[textValue]
 end
 
 return ClassUtils
