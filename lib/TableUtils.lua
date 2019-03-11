@@ -1,6 +1,6 @@
 local TableUtils = {}
 
-function TableUtils.Slice(tbl, first, last, step) --: (any[], number?, number?, number?) => any[]
+function TableUtils.Slice(tbl, first, last, step) --: <T>(T[], number?, number?, number?) => T[]
 	local sliced = {}
 
 	for i = first or 1, last or #tbl, step or 1 do
@@ -10,7 +10,7 @@ function TableUtils.Slice(tbl, first, last, step) --: (any[], number?, number?, 
 	return sliced
 end
 
-function TableUtils.Map(source, handler) --: ((any[], (element: any, key: number) => any) => any[]) | ((table, (element: any, key: string) => any) => table)
+function TableUtils.Map(source, handler) --: (<T, R>(T[], (element: T, key: number) => R) => R[]) | (<T, R>(table<T>, (element: T, key: string) => R) => table<T>)
 	local result = {}
 	for i, v in pairs(source) do
 		result[i] = handler(v, i)
