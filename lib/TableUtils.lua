@@ -40,6 +40,8 @@ function TableUtils.FlatMap(source, handler) --: (any[], (element: any, key: num
 		local list = handler(v, i)
 		if type(list) == "table" then
 			TableUtils.InsertMany(result, list)
+		else
+			table.insert(result, list)
 		end
 	end
 	return result
@@ -329,6 +331,23 @@ function TableUtils.shallowEqual(left, right)
 		return true
 	end
 	return TableUtils.shallowMatch(left, right)
+end
+
+function TableUtils.serialize(input, serializer)
+	serializer = serializer or function(value)
+			return tostring(value)
+		end
+	return "{" ..
+		table.concat(
+			TableUtils.Map(
+				input,
+				function(element, i)
+					return tostring(i) .. "=" .. serializer(element)
+				end
+			),
+			","
+		) ..
+			"}"
 end
 
 return TableUtils
