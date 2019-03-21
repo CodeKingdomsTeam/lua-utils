@@ -337,6 +337,8 @@ function TableUtils.serialize(input, serializer)
 	serializer = serializer or function(value)
 			return tostring(value)
 		end
+	assert(type(input) == "table")
+	assert(type(serializer) == "function")
 	return "{" ..
 		table.concat(
 			TableUtils.Map(
@@ -348,6 +350,22 @@ function TableUtils.serialize(input, serializer)
 			","
 		) ..
 			"}"
+end
+
+function TableUtils.append(...)
+	local result = {}
+	for i = 1, select("#", ...) do
+		local x = select(i, ...)
+		if type(x) == "table" then
+			for _, y in ipairs(x) do
+				table.insert(result, y)
+			end
+		else
+			table.insert(result, x)
+		end
+	end
+
+	return result
 end
 
 return TableUtils

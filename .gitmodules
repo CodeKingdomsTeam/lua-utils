@@ -1,3 +1,4 @@
-[submodule "tea"]
+
+[submodule "modules/tea"]
 	path = modules/tea
 	url = https://github.com/osyrisrblx/t

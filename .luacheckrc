@@ -1,3 +1,13 @@
+std = "lua51+roblox"
+
+files["spec/*.lua"] = {
+	std = "+busted"
+}
+
+exclude_files = {
+	".luacheckrc"
+}
+
 -- prevent max line lengths
 max_code_line_length = false
 max_string_line_length = false
@@ -302,7 +312,7 @@ stds.roblox = {
         BrickColor = def_fields({"new", "palette", "random", "White", "Gray", "DarkGray", "Black",
             "Red", "Yellow", "Green", "Blue"}),
 
-        CFrame = def_fields({"new", "fromEulerAnglesXYZ", "Angles", "fromOrientation",
+        CFrame = def_fields({"new", "fromEulerAnglesXYZ", "fromEulerAnglesYXZ", "Angles", "fromOrientation",
             "fromAxisAngle", "fromMatrix"}),
 
         Color3 = def_fields({"new", "fromRGB", "fromHSV", "toHSV"}),
@@ -731,10 +741,4 @@ stds.plugin = {
 		"plugin",
 		"DebuggerManager",
 	}
-}
-
-std = "lua51+roblox"
-
-files["**/*.spec.lua"] = {
-	std = "+testez",
 }
