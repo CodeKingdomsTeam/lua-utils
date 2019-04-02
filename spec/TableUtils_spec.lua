@@ -395,6 +395,18 @@ describe(
 		)
 
 		describe(
+			"Reverse",
+			function()
+				it(
+					"reverses an array",
+					function()
+						assert.are.same({1, 2, 3, 4, 5}, TableUtils.Reverse({5, 4, 3, 2, 1}))
+					end
+				)
+			end
+		)
+
+		describe(
 			"Filter",
 			function()
 				it(
@@ -943,6 +955,22 @@ describe(
 						local c = {[1] = 5, x = 12}
 
 						assert.are.same({7, 4, 9, 5}, TableUtils.append(a, b, c))
+					end
+				)
+			end
+		)
+
+		describe(
+			"defaults",
+			function()
+				it(
+					"assigns missing properties in order",
+					function()
+						local a = {foo = "bar"}
+						local b = {bar = "baz", bez = "boz"}
+						local c = {bez = "woz", foo = "bor", bof = "buf"}
+
+						assert.are.same({foo = "bar", bar = "baz", bez = "boz", bof = "buf"}, TableUtils.defaults(a, b, c))
 					end
 				)
 			end

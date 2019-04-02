@@ -146,6 +146,18 @@ function TableUtils.Any(source, handler) --: table => boolean
 	))
 end
 
+function TableUtils.Reverse(source)
+	local output = TableUtils.Clone(source)
+	local i = 1
+	local j = #source
+	while i < j do
+		output[i], output[j] = output[j], output[i]
+		i = i + 1
+		j = j - 1
+	end
+	return output
+end
+
 function TableUtils.Invert(source) --: table => table
 	local result = {}
 	for i, v in getIterator(source) do
@@ -262,7 +274,7 @@ function TableUtils.GetLength(table) --: (table) => number
 	return count
 end
 
-function TableUtils.Assign(target, ...)
+local function assign(overwriteTarget, target, ...)
 	-- Use select here so that nil arguments can be supported. If instead we
 	-- iterated over ipairs({...}), any arguments after the first nil one
 	-- would be ignored.
@@ -270,11 +282,21 @@ function TableUtils.Assign(target, ...)
 		local source = select(i, ...)
 		if source ~= nil then
 			for key, value in getIterator(source) do
-				target[key] = value
+				if overwriteTarget or target[key] == nil then
+					target[key] = value
+				end
 			end
 		end
 	end
 	return target
+end
+
+function TableUtils.Assign(target, ...)
+	return assign(true, target, ...)
+end
+
+function TableUtils.defaults(target, ...)
+	return assign(false, target, ...)
 end
 
 function TableUtils.Clone(tbl) --: (table) => table

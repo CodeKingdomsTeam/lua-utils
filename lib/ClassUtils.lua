@@ -33,9 +33,9 @@ function ClassUtils.makeClass(name, constructor, include)
 		return instance
 	end
 	function Class:extend(name, constructor)
-		local Subclass = ClassUtils.makeClass(name, constructor or self.constructor)
-		setmetatable(Subclass, {__index = self})
-		return Subclass
+		local SubClass = ClassUtils.makeClass(name, constructor or self.constructor)
+		setmetatable(SubClass, {__index = self})
+		return SubClass
 	end
 	if include and include.equals then
 		function Class:equals(other)
@@ -64,6 +64,8 @@ function ClassUtils.makeClass(name, constructor, include)
 end
 
 function ClassUtils.makeConstructedClass(name, constructor)
+	constructor = constructor or function()
+		end
 	local Class
 	Class =
 		ClassUtils.makeClass(
@@ -77,6 +79,12 @@ function ClassUtils.makeConstructedClass(name, constructor)
 			return instance
 		end
 	)
+	Class.constructor = constructor
+	function Class:extend(name, constructor)
+		local SubClass = ClassUtils.makeConstructedClass(name, constructor)
+		setmetatable(SubClass, {__index = self})
+		return SubClass
+	end
 	return Class
 end
 
