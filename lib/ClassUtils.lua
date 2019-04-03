@@ -21,14 +21,16 @@ local function generateMetatable(Class)
 end
 
 function ClassUtils.makeClass(name, constructor, include)
+	constructor = constructor or function()
+			return {}
+		end
 	local Class = {
 		name = name,
-		constructor = constructor or function()
-				return {}
-			end
+		constructor = constructor
 	}
 	function Class.new(...)
-		local instance = Class.constructor(...)
+		local instance = constructor(...)
+		assert(type(instance) == "table", "Constructor must return a table")
 		setmetatable(instance, generateMetatable(Class))
 		return instance
 	end
