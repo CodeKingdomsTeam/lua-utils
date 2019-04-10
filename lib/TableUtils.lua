@@ -1,14 +1,34 @@
+local tea = require(script.Parent.Parent.tea)
+
 local TableUtils = {}
+
+setmetatable(
+	TableUtils,
+	{
+		__index = function(table, key)
+			local lowerFirst = key:sub(1, 1):lower() .. key:sub(2)
+			if lowerFirst ~= key then
+				print(
+					"DEPRECATED: " ..
+						key .. " and other capitalized functions in TableUtils are deprecated. Please use the lower-case version instead.",
+					debug.traceback()
+				)
+				return TableUtils[lowerFirst]
+			end
+		end
+	}
+)
 
 local function getIterator(source)
 	if type(source) == "function" then
 		return source
 	else
+		assert(type(source) == "table", "Can only iterate over a table or an iterator function")
 		return pairs(source)
 	end
 end
 
-function TableUtils.Slice(tbl, first, last, step) --: (any[], number?, number?, number?) => any[]
+function TableUtils.slice(tbl, first, last, step) --: <T>(T[], number?, number?, number?) => T[]
 	local sliced = {}
 
 	for i = first or 1, last or #tbl, step or 1 do
@@ -18,7 +38,7 @@ function TableUtils.Slice(tbl, first, last, step) --: (any[], number?, number?, 
 	return sliced
 end
 
-function TableUtils.Map(source, handler) --: ((any[], (element: any, key: number) => any) => any[]) | ((table, (element: any, key: string) => any) => table)
+function TableUtils.map(source, handler) --: <T extends Iterable<K,V>, R extends Iterable<K,V2>((T, (element: V, key: K) => V2) => R)
 	local result = {}
 	for i, v in getIterator(source) do
 		result[i] = handler(v, i)
@@ -26,7 +46,7 @@ function TableUtils.Map(source, handler) --: ((any[], (element: any, key: number
 	return result
 end
 
-function TableUtils.Reverse(source)
+function TableUtils.reverse(source)
 	local result = {}
 	for i = #source, 1, -1 do
 		table.insert(result, source[i])
@@ -34,12 +54,12 @@ function TableUtils.Reverse(source)
 	return result
 end
 
-function TableUtils.FlatMap(source, handler) --: (any[], (element: any, key: number) => any[]) => any[]) | ((table, (element: any, key: string) => any[]) => table)
+function TableUtils.flatMap(source, handler) --: <T extends Iterable<K,V>, U>((T, (element: V, key: K) => U[] | U) => U[])
 	local result = {}
 	for i, v in getIterator(source) do
 		local list = handler(v, i)
 		if type(list) == "table" then
-			TableUtils.InsertMany(result, list)
+			TableUtils.insertMany(result, list)
 		else
 			table.insert(result, list)
 		end
@@ -47,8 +67,8 @@ function TableUtils.FlatMap(source, handler) --: (any[], (element: any, key: num
 	return result
 end
 
-function TableUtils.Shuffle(source) --: table => table
-	local result = TableUtils.Clone(source)
+function TableUtils.shuffle(source) --: <T extends Iterable>(T => T)
+	local result = TableUtils.clone(source)
 	for i = #result, 1, -1 do
 		local j = math.random(i)
 		result[i], result[j] = result[j], result[i]
@@ -56,7 +76,7 @@ function TableUtils.Shuffle(source) --: table => table
 	return result
 end
 
-function TableUtils.Filter(source, handler) --: table, (element: any, key: number | string => boolean) => any[]
+function TableUtils.filter(source, handler) --: <T extends Iterable<K,V>>(T, (element: V, key: K => boolean) => V[])
 	local result = {}
 	for i, v in getIterator(source) do
 		if handler(v, i) then
@@ -66,7 +86,7 @@ function TableUtils.Filter(source, handler) --: table, (element: any, key: numbe
 	return result
 end
 
-function TableUtils.FilterKeys(source, handler) --: table, (element: any, key: string => boolean) => table
+function TableUtils.filterKeys(source, handler) --: <T extends Iterable<K,V>>(T, (element: V, key: K => boolean) => T)
 	local result = {}
 	for i, v in getIterator(source) do
 		if handler(v, i) then
@@ -76,7 +96,7 @@ function TableUtils.FilterKeys(source, handler) --: table, (element: any, key: s
 	return result
 end
 
-function TableUtils.FilterKeysMap(source, handler) --: table, (element: any, key: string => any) => table
+function TableUtils.filterKeysMap(source, handler) --: <T extends Iterable<K,V>, R extends Iterable<K,U>>(T, (element: V, key: K => U) => R
 	local result = {}
 	for i, v in getIterator(source) do
 		local value = handler(v, i)
@@ -87,8 +107,8 @@ function TableUtils.FilterKeysMap(source, handler) --: table, (element: any, key
 	return result
 end
 
-function TableUtils.Without(source, element)
-	return TableUtils.Filter(
+function TableUtils.without(source, element) --: <T extends Iterable<K,V>>(T, V => T)
+	return TableUtils.filter(
 		source,
 		function(child)
 			return child ~= element
@@ -96,8 +116,8 @@ function TableUtils.Without(source, element)
 	)
 end
 
-function TableUtils.Compact(source) --: table => table
-	return TableUtils.Filter(
+function TableUtils.compact(source) --: <T extends Iterable<K,V>>(T, T)
+	return TableUtils.filter(
 		source,
 		function(value)
 			return value
@@ -105,7 +125,7 @@ function TableUtils.Compact(source) --: table => table
 	)
 end
 
-function TableUtils.Reduce(source, handler, init) --: <T>(any[], (previous: T, current: any,  key: number | string => T), T?) => T
+function TableUtils.reduce(source, handler, init) --: <T, R>(T[], (acc: R, current: T, key: number => R), R) => R
 	local result = init
 	for i, v in getIterator(source) do
 		result = handler(result, v, i)
@@ -113,7 +133,7 @@ function TableUtils.Reduce(source, handler, init) --: <T>(any[], (previous: T, c
 	return result
 end
 
-function TableUtils.All(source, handler) --: table => boolean
+function TableUtils.all(source, handler) --: <T extends Iterable<K,V>>(T => boolean)
 	if not handler then
 		handler = function(x)
 			return x
@@ -121,7 +141,7 @@ function TableUtils.All(source, handler) --: table => boolean
 	end
 	-- Use double negation to coerce the type to a boolean, as there is
 	-- no toboolean() or equivalent in Lua.
-	return not (not TableUtils.Reduce(
+	return not (not TableUtils.reduce(
 		source,
 		function(acc, value, key)
 			return acc and handler(value, key)
@@ -129,7 +149,7 @@ function TableUtils.All(source, handler) --: table => boolean
 		true
 	))
 end
-function TableUtils.Any(source, handler) --: table => boolean
+function TableUtils.any(source, handler) --: <T extends Iterable<K,V>>(T => boolean)
 	if not handler then
 		handler = function(x)
 			return x
@@ -137,7 +157,7 @@ function TableUtils.Any(source, handler) --: table => boolean
 	end
 	-- Use double negation to coerce the type to a boolean, as there is
 	-- no toboolean() or equivalent in Lua.
-	return not (not TableUtils.Reduce(
+	return not (not TableUtils.reduce(
 		source,
 		function(acc, value, key)
 			return acc or handler(value, key)
@@ -146,8 +166,8 @@ function TableUtils.Any(source, handler) --: table => boolean
 	))
 end
 
-function TableUtils.Reverse(source)
-	local output = TableUtils.Clone(source)
+function TableUtils.reverse(source)
+	local output = TableUtils.clone(source)
 	local i = 1
 	local j = #source
 	while i < j do
@@ -158,7 +178,7 @@ function TableUtils.Reverse(source)
 	return output
 end
 
-function TableUtils.Invert(source) --: table => table
+function TableUtils.invert(source) --: <K extends Key, V>(Iterable<K,V> => Iterable<V,K>)
 	local result = {}
 	for i, v in getIterator(source) do
 		result[v] = i
@@ -166,7 +186,7 @@ function TableUtils.Invert(source) --: table => table
 	return result
 end
 
-function TableUtils.KeyBy(source, handler) --: table, (any => string | number) => table
+function TableUtils.keyBy(source, handler) --: <T, K extends Key>(T[], (T => K) => Iterable<K,V>)
 	local result = {}
 	for i, v in getIterator(source) do
 		local key = handler(v, i)
@@ -177,7 +197,7 @@ function TableUtils.KeyBy(source, handler) --: table, (any => string | number) =
 	return result
 end
 
-function TableUtils.GroupBy(source, handler) --: table, (any => string | number) => table
+function TableUtils.groupBy(source, handler) --: <T extends Iterable<K,V>, I extends Key>((value: T, key: K) => I) => Iterable<I, Iterable<K,V>>)
 	local result = {}
 	for i, v in getIterator(source) do
 		local key = handler(v, i)
@@ -191,7 +211,7 @@ function TableUtils.GroupBy(source, handler) --: table, (any => string | number)
 	return result
 end
 
-function TableUtils.Merge(target, ...)
+function TableUtils.merge(target, ...)
 	-- Use select here so that nil arguments can be supported. If instead we
 	-- iterated over ipairs({...}), any arguments after the first nil one
 	-- would be ignored.
@@ -200,7 +220,7 @@ function TableUtils.Merge(target, ...)
 		if source ~= nil then
 			for key, value in getIterator(source) do
 				if type(target[key]) == "table" and type(value) == "table" then
-					target[key] = TableUtils.Merge(target[key] or {}, value)
+					target[key] = TableUtils.merge(target[key] or {}, value)
 				else
 					target[key] = value
 				end
@@ -210,7 +230,7 @@ function TableUtils.Merge(target, ...)
 	return target
 end
 
-function TableUtils.Values(source) --: table => any[]
+function TableUtils.values(source) --: table => any[]
 	local result = {}
 	for i, v in getIterator(source) do
 		table.insert(result, v)
@@ -218,7 +238,7 @@ function TableUtils.Values(source) --: table => any[]
 	return result
 end
 
-function TableUtils.Keys(source) --: table => any[]
+function TableUtils.keys(source) --: table => any[]
 	local result = {}
 	for i, v in getIterator(source) do
 		table.insert(result, i)
@@ -226,7 +246,7 @@ function TableUtils.Keys(source) --: table => any[]
 	return result
 end
 
-function TableUtils.Entries(source) --: table => [string | number, any][]
+function TableUtils.entries(source) --: table => [string | number, any][]
 	local result = {}
 	for i, v in getIterator(source) do
 		table.insert(result, {i, v})
@@ -234,7 +254,7 @@ function TableUtils.Entries(source) --: table => [string | number, any][]
 	return result
 end
 
-function TableUtils.Find(source, handler) --: ((any[], (element: any, key: number) => boolean) => any) | ((table, (element: any, key: string) => boolean) => any)
+function TableUtils.find(source, handler) --: <T extends Iterable<K,V>>((T, (element: V, key: K) => boolean) => V)
 	for i, v in getIterator(source) do
 		if (handler(v, i)) then
 			return v
@@ -242,8 +262,16 @@ function TableUtils.Find(source, handler) --: ((any[], (element: any, key: numbe
 	end
 end
 
-function TableUtils.Includes(source, item) --: table, any => boolean
-	return TableUtils.Find(
+function TableUtils.findKey(source, handler) --: <T extends Iterable<K,V>>((T, (element: V, key: K) => boolean) => K)
+	for i, v in getIterator(source) do
+		if (handler(v, i)) then
+			return i
+		end
+	end
+end
+
+function TableUtils.includes(source, item) --: table, any => boolean
+	return TableUtils.find(
 		source,
 		function(value)
 			return value == item
@@ -251,7 +279,7 @@ function TableUtils.Includes(source, item) --: table, any => boolean
 	) ~= nil
 end
 
-function TableUtils.KeyOf(source, value) --: (table, any) => number?
+function TableUtils.keyOf(source, value) --: (table, any) => number?
 	for k, v in getIterator(source) do
 		if (value == v) then
 			return k
@@ -259,14 +287,14 @@ function TableUtils.KeyOf(source, value) --: (table, any) => number?
 	end
 end
 
-function TableUtils.InsertMany(target, items) --: (any[], any[]) => any[]
+function TableUtils.insertMany(target, items) --: (any[], any[]) => any[]
 	for _, v in getIterator(items) do
 		table.insert(target, v)
 	end
 	return target
 end
 
-function TableUtils.GetLength(table) --: (table) => number
+function TableUtils.getLength(table) --: (table) => number
 	local count = 0
 	for _ in pairs(table) do
 		count = count + 1
@@ -291,7 +319,7 @@ local function assign(overwriteTarget, target, ...)
 	return target
 end
 
-function TableUtils.Assign(target, ...)
+function TableUtils.assign(target, ...)
 	return assign(true, target, ...)
 end
 
@@ -299,11 +327,11 @@ function TableUtils.defaults(target, ...)
 	return assign(false, target, ...)
 end
 
-function TableUtils.Clone(tbl) --: (table) => table
-	return TableUtils.Assign({}, tbl)
+function TableUtils.clone(tbl) --: (table) => table
+	return TableUtils.assign({}, tbl)
 end
 
-function TableUtils.IsSubset(a, b)
+function TableUtils.isSubset(a, b)
 	if type(a) ~= "table" or type(b) ~= "table" then
 		return false
 	else
@@ -314,7 +342,7 @@ function TableUtils.IsSubset(a, b)
 			elseif aValue ~= bValue then
 				if type(aValue) == "table" then
 					-- The values are tables, so we need to recurse for a deep comparison.
-					if not TableUtils.IsSubset(aValue, bValue) then
+					if not TableUtils.isSubset(aValue, bValue) then
 						return false
 					end
 				else
@@ -326,20 +354,20 @@ function TableUtils.IsSubset(a, b)
 	return true
 end
 
-function TableUtils.DeepEquals(a, b)
-	return TableUtils.IsSubset(a, b) and TableUtils.IsSubset(b, a)
+function TableUtils.deepEquals(a, b)
+	return TableUtils.isSubset(a, b) and TableUtils.isSubset(b, a)
 end
 
 function TableUtils.shallowMatch(left, right)
 	if type(left) ~= "table" or type(right) ~= "table" then
 		return false
 	end
-	local leftKeys = TableUtils.Keys(left)
-	local rightKeys = TableUtils.Keys(right)
+	local leftKeys = TableUtils.keys(left)
+	local rightKeys = TableUtils.keys(right)
 	if #leftKeys ~= #rightKeys then
 		return false
 	end
-	return TableUtils.All(
+	return TableUtils.all(
 		left,
 		function(value, key)
 			return value == right[key]
@@ -363,7 +391,7 @@ function TableUtils.serialize(input, serializer)
 	assert(type(serializer) == "function")
 	return "{" ..
 		table.concat(
-			TableUtils.Map(
+			TableUtils.map(
 				input,
 				function(element, i)
 					return tostring(i) .. "=" .. serializer(element)
@@ -388,6 +416,32 @@ function TableUtils.append(...)
 	end
 
 	return result
+end
+
+function TableUtils.sort(input, comparator)
+	assert(tea.table(input), input)
+
+	local FunctionUtils = require(script.Parent.FunctionUtils)
+	assert(comparator == nil or FunctionUtils.isCallable(comparator), "comparator must be callable or nil")
+
+	comparator = comparator or function(a, b)
+			return a < b
+		end
+
+	table.sort(
+		input,
+		function(a, b)
+			local result = comparator(a, b)
+
+			if type(result) ~= "boolean" and result ~= nil then
+				error("sort comparator must return a boolean or nil")
+			end
+
+			return result
+		end
+	)
+
+	return input
 end
 
 return TableUtils

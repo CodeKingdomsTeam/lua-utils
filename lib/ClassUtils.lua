@@ -1,3 +1,4 @@
+local tea = require(script.Parent.Parent.tea)
 local TableUtils = require(script.Parent.TableUtils)
 local ClassUtils = {}
 
@@ -73,7 +74,7 @@ function ClassUtils.makeConstructedClass(name, constructor)
 		ClassUtils.makeClass(
 		name,
 		function(data)
-			local instance = TableUtils.Clone(data)
+			local instance = TableUtils.clone(data)
 			if constructor then
 				setmetatable(instance, generateMetatable(Class))
 				constructor(instance)
@@ -91,17 +92,43 @@ function ClassUtils.makeConstructedClass(name, constructor)
 end
 
 function ClassUtils.makeEnum(keys)
-	return TableUtils.KeyBy(
+	local enum =
+		TableUtils.keyBy(
 		keys,
 		function(key)
 			assert(key:match("^[A-Z_]+$"), "Enum keys must be defined as upper snake case")
 			return key
 		end
 	)
+
+	setmetatable(
+		enum,
+		{
+			__index = function(t, key)
+				error("Attempt to access key " .. key .. " which is not a valid key of the enum")
+			end,
+			__newindex = function(t, key)
+				error("Attempt to set key " .. key .. " on enum")
+			end
+		}
+	)
+
+	return enum
+end
+
+function ClassUtils.applySwitchStrategyForEnum(enum, enumValue, strategies, ...)
+	assert(ClassUtils.isA(enumValue, enum), "enumValue must be an instance of enum")
+	assert(
+		TableUtils.deepEquals(TableUtils.sort(TableUtils.values(enum)), TableUtils.sort(TableUtils.keys(strategies))),
+		"keys for strategies must match values for enum"
+	)
+	assert(tea.values(tea.callback)(strategies), "strategies values must be functions")
+
+	return strategies[enumValue](...)
 end
 
 function ClassUtils.makeSymbolEnum(keys)
-	return TableUtils.Map(
+	return TableUtils.map(
 		ClassUtils.makeEnum(keys),
 		function(key)
 			return ClassUtils.Symbol.new(key)
