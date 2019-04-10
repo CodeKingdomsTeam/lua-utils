@@ -166,18 +166,6 @@ function TableUtils.any(source, handler) --: <T extends Iterable<K,V>>(T => bool
 	))
 end
 
-function TableUtils.reverse(source)
-	local output = TableUtils.clone(source)
-	local i = 1
-	local j = #source
-	while i < j do
-		output[i], output[j] = output[j], output[i]
-		i = i + 1
-		j = j - 1
-	end
-	return output
-end
-
 function TableUtils.invert(source) --: <K extends Key, V>(Iterable<K,V> => Iterable<V,K>)
 	local result = {}
 	for i, v in getIterator(source) do
