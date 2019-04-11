@@ -50,7 +50,7 @@ function ClassUtils.makeClass(name, constructor, include)
 		function Class:toString()
 			local string = Class.name .. "("
 			local first = true
-			local keys = TableUtils.Keys(self)
+			local keys = TableUtils.keys(self)
 			table.sort(keys)
 			for _, key in ipairs(keys) do
 				local value = self[key]

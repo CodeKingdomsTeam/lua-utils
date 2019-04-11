@@ -40,9 +40,9 @@ end
     The promise resolves to a table mapping the input table keys to resolved values.
 ]]
 function AsyncUtils.props(things)
-	local keys = TableUtils.Keys(things)
+	local keys = TableUtils.keys(things)
 	local values =
-		TableUtils.Map(
+		TableUtils.map(
 		keys,
 		function(key)
 			return things[key]
@@ -50,7 +50,7 @@ function AsyncUtils.props(things)
 	)
 	return AsyncUtils.parallel(values):andThen(
 		function(output)
-			return TableUtils.KeyBy(
+			return TableUtils.keyBy(
 				output,
 				function(value, i)
 					return keys[i]
