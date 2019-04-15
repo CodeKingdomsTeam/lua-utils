@@ -54,6 +54,14 @@ function TableUtils.reverse(source)
 	return result
 end
 
+function TableUtils.mapKeys(source, handler) --: <T extends Iterable<K,V>, R extends Iterable<K,V2>((T, (element: V, key: K) => V2) => R)
+	local result = {}
+	for i, v in getIterator(source) do
+		result[handler(v, i)] = v
+	end
+	return result
+end
+
 function TableUtils.flatMap(source, handler) --: <T extends Iterable<K,V>, U>((T, (element: V, key: K) => U[] | U) => U[])
 	local result = {}
 	for i, v in getIterator(source) do
@@ -102,6 +110,18 @@ function TableUtils.filterKeysMap(source, handler) --: <T extends Iterable<K,V>,
 		local value = handler(v, i)
 		if value ~= nil then
 			result[i] = value
+		end
+	end
+	return result
+end
+
+function TableUtils.omitBy(source, handler)
+	local result = {}
+
+	for i, v in getIterator(source) do
+		local value = handler(v, i)
+		if not value then
+			result[i] = v
 		end
 	end
 	return result
