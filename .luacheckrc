@@ -693,5 +693,5 @@ stds.roblox = {
                 ZIndexBehavior = def_enum({"Global", "Sibling"}),
             }
         }
-    },
+    }
 }
