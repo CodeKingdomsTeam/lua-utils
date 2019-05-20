@@ -25,18 +25,67 @@ function ClassUtils.makeClass(name, constructor, include)
 	constructor = constructor or function()
 			return {}
 		end
+	include =
+		include or
+		{
+			toString = true,
+			equals = true
+		}
 	local Class = {
-		name = name,
-		constructor = constructor
+		name = name
 	}
+	setmetatable(
+		Class,
+		{
+			__tostring = function()
+				return string.format("Class<%s>", name)
+			end
+		}
+	)
 	function Class.new(...)
 		local instance = constructor(...)
 		assert(type(instance) == "table", "Constructor must return a table")
 		setmetatable(instance, generateMetatable(Class))
+		instance.Class = Class
+		if instance._init then
+			instance:_init(...)
+		end
 		return instance
 	end
-	function Class:extend(name, constructor)
-		local SubClass = ClassUtils.makeClass(name, constructor or self.constructor)
+	function Class.isInstance(value)
+		local ok = ClassUtils.isA(value, Class)
+		return ok, not ok and string.format("Not a %s instance", name) or nil
+	end
+	function Class:extend(name, subConstructor)
+		local SubClass = ClassUtils.makeClass(name, subConstructor or Class.new)
+		setmetatable(SubClass, {__index = self})
+		return SubClass
+	end
+	function Class:extendWithInterface(name, interface)
+		local function getComposableInterface(input)
+			if input == nil then
+				return function()
+					return {}
+				end
+			elseif type(input) == "function" then
+				return input
+			else
+				return function()
+					return input
+				end
+			end
+		end
+		local inheritedInterface = self.interface
+		-- NOTE: Sub interfaces can at present override super interfaces, so this should be avoided
+		-- to provide better validation detection / true field type inheritence.
+		local compositeInterface = function(Class)
+			return TableUtils.assign(
+				{},
+				getComposableInterface(interface)(Class),
+				getComposableInterface(inheritedInterface)(Class)
+			)
+		end
+		local SubClass = ClassUtils.makeClassWithInterface(name, compositeInterface)
 		setmetatable(SubClass, {__index = self})
 		return SubClass
 	end
@@ -66,28 +115,33 @@ function ClassUtils.makeClass(name, constructor, include)
 	return Class
 end
 
-function ClassUtils.makeConstructedClass(name, constructor)
-	constructor = constructor or function()
-		end
-	local Class
-	Class =
+function ClassUtils.makeClassWithInterface(name, interface)
+	local function getImplementsInterface(currentInterface)
+		local ok, problem = tea.values(tea.callback)(currentInterface)
+		assert(ok, string.format([[Class %s does not have a valid interface
+%s]], name, tostring(problem)))
+		return tea.strictInterface(currentInterface)
+	end
+	local implementsInterface
+	local Class =
 		ClassUtils.makeClass(
 		name,
 		function(data)
-			local instance = TableUtils.clone(data)
-			if constructor then
-				setmetatable(instance, generateMetatable(Class))
-				constructor(instance)
-			end
-			return instance
+			data = data or {}
+			local ok, problem = implementsInterface(data)
+			assert(ok, string.format([[Class %s cannot be instantiated
+%s]], name, tostring(problem)))
+			return TableUtils.mapKeys(
+				data,
+				function(_, key)
+					return "_" .. key
+				end
+			)
 		end
 	)
-	Class.constructor = constructor
-	function Class:extend(name, constructor)
-		local SubClass = ClassUtils.makeConstructedClass(name, constructor)
-		setmetatable(SubClass, {__index = self})
-		return SubClass
-	end
+	implementsInterface =
+		type(interface) == "function" and getImplementsInterface(interface(Class)) or getImplementsInterface(interface)
+	Class.interface = interface
 	return Class
 end
 
@@ -105,10 +159,10 @@ function ClassUtils.makeEnum(keys)
 		enum,
 		{
 			__index = function(t, key)
-				error("Attempt to access key " .. key .. " which is not a valid key of the enum")
+				error(string.format("Attempt to access key %s which is not a valid key of the enum", key))
 			end,
 			__newindex = function(t, key)
-				error("Attempt to set key " .. key .. " on enum")
+				error(string.format("Attempt to set key %s on enum", key))
 			end
 		}
 	)
@@ -127,13 +181,23 @@ function ClassUtils.applySwitchStrategyForEnum(enum, enumValue, strategies, ...)
 	return strategies[enumValue](...)
 end
 
-function ClassUtils.makeSymbolEnum(keys)
-	return TableUtils.map(
-		ClassUtils.makeEnum(keys),
-		function(key)
-			return ClassUtils.Symbol.new(key)
+function ClassUtils.makeFinal(object)
+	local backend = getmetatable(object)
+	local proxy = {
+		__index = function(t, key)
+			error(string.format("Attempt to access key %s which is missing in final object", key))
+		end,
+		__newindex = function(t, key)
+			error(string.format("Attempt to set key %s on final object", key))
 		end
-	)
+	}
+	if backend then
+		setmetatable(proxy, backend)
+	end
+
+	setmetatable(object, proxy)
+
+	return object
 end
 
 function ClassUtils.isA(instance, classOrEnum)
@@ -163,7 +227,8 @@ ClassUtils.Symbol =
 		return {
 			__symbol = name
 		}
-	end
+	end,
+	{}
 )
 
 function ClassUtils.Symbol:toString()
