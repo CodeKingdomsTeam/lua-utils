@@ -23,37 +23,6 @@ ignore = {
 	"614" -- Trailing whitespace in a comment.
 }
 
-exclude_files = {
-	".luacheckrc"
-}
-
-stds.baste = {
-	read_globals = {
-		"import"
-	}
-}
-
-stds.hydrator = {
-	read_globals = {
-        "PluginSettings",
-		"PluginSettingsCache",
-        "HttpRequestCache",
-        "HydratorHttpService"
-	}
-}
-
-files["**/hydrator/**/*.lua"] = {
-    std = "lua51+roblox+plugin+hydrator"
-}
-
-files["**/plugin/testInit.lua"] = {
-	std = "lua51+plugin"
-}
-
-files["**/spec/**/*.lua"] = {
-	std = "+busted+baste"
-}
-
 -- Copied from https://github.com/Quenty/luacheck-roblox/blob/master/roblox_standard.lua
 local empty = {}
 local read_write = { read_only = false }
@@ -725,20 +694,4 @@ stds.roblox = {
             }
         }
     },
-}
-
-stds.testez = {
-	read_globals = {
-		"describe",
-		"it", "itFOCUS", "itSKIP",
-		"FOCUS", "SKIP", "HACK_NO_XPCALL",
-		"expect", "fail"
-	}
-}
-
-stds.plugin = {
-	read_globals = {
-		"plugin",
-		"DebuggerManager",
-	}
 }
