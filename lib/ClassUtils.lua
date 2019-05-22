@@ -22,15 +22,13 @@ local function generateMetatable(Class)
 end
 
 function ClassUtils.makeClass(name, constructor, include)
+	if type(constructor) == "table" then
+		include = constructor
+		constructor = nil
+	end
 	constructor = constructor or function()
 			return {}
 		end
-	include =
-		include or
-		{
-			toString = true,
-			equals = true
-		}
 	local Class = {
 		name = name
 	}

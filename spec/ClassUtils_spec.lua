@@ -36,7 +36,13 @@ describe(
 				it(
 					"provides a default toString handler",
 					function()
-						local MyClass = ClassUtils.makeClass("Simple")
+						local MyClass =
+							ClassUtils.makeClass(
+							"Simple",
+							{
+								toString = true
+							}
+						)
 						local myInstance = MyClass.new()
 						assert.equals("Simple(Class = Class<Simple>)", tostring(myInstance))
 					end
