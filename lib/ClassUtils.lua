@@ -21,6 +21,22 @@ local function generateMetatable(Class)
 	}
 end
 
+function ClassUtils.toString(instance)
+	local string = instance.Class.name .. "("
+	local first = true
+	local keys = TableUtils.keys(instance)
+	table.sort(keys)
+	for _, key in ipairs(keys) do
+		local value = instance[key]
+		if not first then
+			string = string .. ", "
+		end
+		string = string .. key .. " = " .. tostring(value)
+		first = false
+	end
+	return string .. ")"
+end
+
 function ClassUtils.makeClass(name, constructor, include)
 	if type(constructor) == "table" then
 		include = constructor
@@ -94,21 +110,7 @@ function ClassUtils.makeClass(name, constructor, include)
 		end
 	end
 	if include and include.toString then
-		function Class:toString()
-			local string = Class.name .. "("
-			local first = true
-			local keys = TableUtils.keys(self)
-			table.sort(keys)
-			for _, key in ipairs(keys) do
-				local value = self[key]
-				if not first then
-					string = string .. ", "
-				end
-				string = string .. key .. " = " .. tostring(value)
-				first = false
-			end
-			return string .. ")"
-		end
+		Class.toString = ClassUtils.toString
 	end
 	return Class
 end
@@ -233,7 +235,10 @@ function ClassUtils.Symbol:toString()
 	return self.__symbol
 end
 
-function ClassUtils.parseEnumValue(value, ENUM)
+function ClassUtils.parseEnumValue(value, ENUM, allowNil)
+	if allowNil and value == nil then
+		return
+	end
 	local textValue = tostring(value):upper():gsub("-", "_")
 	return ENUM[textValue]
 end
