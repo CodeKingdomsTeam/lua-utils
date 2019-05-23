@@ -452,4 +452,24 @@ function TableUtils.sort(input, comparator)
 	return input
 end
 
+function TableUtils.inspect(source)
+	if type(source) ~= "table" then
+		return tostring(source)
+	elseif source.Class then
+		local ClassUtils = require(script.Parent.ClassUtils)
+		return ClassUtils.toString(source)
+	else
+		local string = "{"
+		local first = true
+		for key, value in pairs(source) do
+			if not first then
+				string = string .. ", "
+			end
+			string = string .. key .. " = " .. TableUtils.inspect(value)
+			first = false
+		end
+		return string .. "}"
+	end
+end
+
 return TableUtils
