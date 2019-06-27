@@ -258,6 +258,14 @@ function TableUtils.keys(source) --: table => any[]
 	return result
 end
 
+function TableUtils.pick(source, keys) --: (table, table) => table
+	local result = {}
+	for _, v in getIterator(keys) do
+		result[v] = source[v]
+	end
+	return result
+end
+
 function TableUtils.entries(source) --: table => [string | number, any][]
 	local result = {}
 	for i, v in getIterator(source) do
