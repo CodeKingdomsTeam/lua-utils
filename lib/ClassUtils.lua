@@ -12,11 +12,15 @@ function ClassUtils.makeClass(name, constructor)
 		name = name
 	}
 	function Class.new(...)
-		local instance = constructor(...)
-		setmetatable(instance, {__index = Class, __tostring = Class.toString})
+		local instance = Class.newWithoutInit(...)
 		if instance._init then
 			instance:_init(...)
 		end
+		return instance
+	end
+	function Class.newWithoutInit(...)
+		local instance = constructor(...)
+		setmetatable(instance, {__index = Class, __tostring = Class.toString})
 		instance.Class = Class
 		return instance
 	end
@@ -25,7 +29,7 @@ function ClassUtils.makeClass(name, constructor)
 		return ok, not ok and string.format("Not a %s instance", name) or nil
 	end
 	function Class:extend(name, subConstructor)
-		local SubClass = ClassUtils.makeClass(name, subConstructor or Class.new)
+		local SubClass = ClassUtils.makeClass(name, subConstructor or Class.newWithoutInit)
 		setmetatable(SubClass, {__index = self})
 		return SubClass
 	end
