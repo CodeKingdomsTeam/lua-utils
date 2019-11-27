@@ -1,5 +1,5 @@
 local TableUtils = require(script.Parent.TableUtils)
-local Promise = require(script.Parent.Parent.Promise)
+local Promise = require(script.Parent.Parent.Ts.Promise)
 local AsyncUtils = {}
 
 local baseRandomStream = Random.new()
